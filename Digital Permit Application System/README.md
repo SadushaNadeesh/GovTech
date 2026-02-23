@@ -40,7 +40,7 @@ This project consists of two main components:
    npm run start:dev
    ```
 
-The backend will be running on `http://localhost:3000`
+The backend will be running on `http://localhost:3001`
 
 ### Frontend Setup (Next.js)
 
@@ -59,7 +59,7 @@ The backend will be running on `http://localhost:3000`
    npm run dev
    ```
 
-The frontend will be running on `http://localhost:3001`
+The frontend will be running on `http://localhost:3000`
 
 ### Running the Full Application
 
