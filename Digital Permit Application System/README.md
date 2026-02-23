@@ -13,8 +13,6 @@ This project consists of two main components:
 
 - Permit creation and management
 - RESTful API endpoints for permit operations
-- Modern web interface for permit applications
-- TypeScript throughout the stack
 
 ## Setup Instructions
 
@@ -22,6 +20,10 @@ This project consists of two main components:
 
 - Node.js (v18 or higher)
 - npm or yarn package manager
+
+### Backend Setup (NestJS)
+
+1. Create a DB with server name - `permitDb` in PostgreSQL.
 
 ### Backend Setup (NestJS)
 
@@ -84,16 +86,64 @@ The backend provides the following endpoints:
 - **Frontend**: Next.js, React, TypeScript
 - **Styling**: Tailwind CSS (configured in frontend)
 
-## Development
+## Assumptions made
+- Database and Persistence
+-- Uses PostgreSQL with TypeORM, with synchronize: true for automatic schema updates (not production-safe). No migrations or complex queries.
+-- Simplifies setup for a demo; assumes a local database with hardcoded credentials.
 
-- Backend uses ESLint for code linting
-- Frontend uses ESLint and PostCSS
-- Both projects include Jest for unit testing
+- Status Workflow and Transitions
+-- Assumes a straightforward process; real systems might have more complex workflows with conditional logic or user roles.
 
-## Contributing
+- Event-Driven Architecture
+-- Status changes trigger "events" via console.log (placeholder for a real event system like RabbitMQ or Kafka). No actual event handling or subscribers.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests
-5. Submit a pull request
+- Overall Architecture and Modularity
+-- Modular NestJS structure with separate modules, but no microservices, caching, or external integrations
+
+## Commands Used
+- `npx create-next-app`
+- `nest back-end`
+- `npm install @nestjs/typeorm typeorm pg`
+
+## Use of External Resources (AI Tools - Co pilot)
+
+1. To validate the project.
+2. To create the status check logic.
+3. To UI designing.
+4. To generate the readme file.
+5. To clarify points/concepts and to get examples.
+
+## Written Architecture Questions
+11.1 Scalability - To handle 1 million permit applications:
+
+Database: Cloud DBs, replicas for PostgreSQL.
+API: Implement horizontal scaling with load balancers. Add caching (Redis) for frequent queries.
+Microservices: Break into services (e.g., permit processing, notifications) deployed as containers (Docker/K8s) for independent scaling.
+Monitoring: Use tools like Grafana to monitor load and scale dynamically.
+
+11.2 Event-Driven Architecture - For a Kafka-based implementation:
+
+Topic Design: Use topics like permit-events (for status changes), permit-created, permit-reviewed. Partition by permit ID for ordering.
+Producers: API service produces events on status updates (e.g., PermitStatusChanged). Use Kafka producer with retries.
+Consumers: Separate services consume events (e.g., notification service for emails, audit service for logging). Use consumer groups for parallel processing.
+Handling Failures: Implement dead-letter queues for failed messages. Use circuit breakers and exponential backoff for retries.
+Ensuring Idempotency: Include unique event IDs (e.g., UUIDs) and check for duplicates in consumers using a database or Redis cache.
+
+11.3 Integration - High-level integration approaches:
+
+Digital Identity Platform: Use OAuth2/JWT for authentication. On permit creation, validate citizen ID via API calls to the identity service, fetching verified details to populate/enrich the permit.
+Government Payment Platform: After approval, trigger payment for fees; handle callbacks to update permit status.
+National Data Exchange: Use APIs or message queues for data sharing. Pull business registry data for validation; push approved permits to national databases for compliance reporting.
+
+11.4 Concurrency - If two officers update the same permit simultaneously:
+
+Issue: Race conditions could lead to lost updates or inconsistent states (e.g., one update overwrites the other).
+Handling: Use optimistic locking (version fields in DB) or pessimistic locking (database transactions). In TypeORM, add @Version() to the entity; throw conflicts on concurrent updates. For retries, implement exponential backoff in the client.
+
+11.5 Cloud Deployment - In a cloud-native environment (e.g., AWS/Azure):
+
+Containerization: Package backend/frontend as Docker images.
+Orchestration: Deploy on Kubernetes (EKS/AKS) with Helm charts for services, ingress controllers, and secrets management.
+Database: Use managed RDS/Aurora for PostgreSQL with backups and multi-AZ.
+CI/CD: Use GitHub Actions or Jenkins for automated builds/deployments to staging/prod.
+Security/Monitoring: Enable VPCs, IAM roles, CloudWatch for logs/metrics, and auto-scaling based on CPU/memory. Use API Gateway for rate limiting and authentication.
